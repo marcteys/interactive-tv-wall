@@ -28,6 +28,10 @@ class MapperWindow(pyglet.window.Window):
         self.panel = ControlPanelView()
         pyglet.clock.schedule_interval(self._tick, 1.0 / max(self.controller.state.config.framerate, 1))
 
+    def _reschedule_tick(self) -> None:
+        pyglet.clock.unschedule(self._tick)
+        pyglet.clock.schedule_interval(self._tick, 1.0 / max(self.controller.state.config.framerate, 1))
+
     def _tick(self, dt: float) -> None:
         self.output_renderer.ensure_source(self.controller.state, self.source_service)
 
@@ -64,6 +68,7 @@ class MapperWindow(pyglet.window.Window):
         action = self.panel.hit_test(x, y)
         if action is not None:
             self.controller.handle_action(action)
+            self._reschedule_tick()
             self._apply_window_state()
             return
         layout = self._layout()
@@ -84,6 +89,7 @@ class MapperWindow(pyglet.window.Window):
         shift_pressed = bool(modifiers & key.MOD_SHIFT)
         if symbol == key.F:
             self.controller.handle_action(PanelAction("toggle_fullscreen"))
+            self._reschedule_tick()
             self._apply_window_state()
             return
         if symbol == key.R:
@@ -94,6 +100,7 @@ class MapperWindow(pyglet.window.Window):
             return
         if symbol == key.L:
             self.controller.load()
+            self._reschedule_tick()
             self._apply_window_state()
             return
         if symbol == key.I:
@@ -105,6 +112,7 @@ class MapperWindow(pyglet.window.Window):
         if symbol in (key._1, key._2, key._3):
             layout = {key._1: 0, key._2: 1, key._3: 2}[symbol]
             self.controller.handle_action(PanelAction("set_layout", {"index": layout}))
+            self._reschedule_tick()
             return
         if alt_pressed:
             if symbol == key.LEFT:

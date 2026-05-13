@@ -9,12 +9,14 @@ class ControlPanelView:
     def __init__(self) -> None:
         self.painter = WidgetPainter()
         self.scroll_offset = 0.0
+        self.max_scroll = 0.0
 
     def hit_test(self, x: float, y: float) -> PanelAction | None:
+        # Regions are populated by draw(); returns None if draw() hasn't run yet this frame.
         return self.painter.hit_test(x, y)
 
     def scroll(self, amount: float) -> None:
-        self.scroll_offset = max(0.0, self.scroll_offset + amount)
+        self.scroll_offset = max(0.0, min(self.scroll_offset + amount, self.max_scroll))
 
     def draw(self, state: AppState, rect: Rect) -> None:
         self.painter.reset()
@@ -119,10 +121,11 @@ class ControlPanelView:
 
         self.painter.section_title(x, y, "TV Values")
         y -= 30
+        tv_section_top = y
         tv_y = y - self.scroll_offset
         for tv_index, tv in enumerate(state.config.tv_mappings, start=1):
             if tv_y < rect.y + 24:
-                tv_y -= 134
+                tv_y -= 148
                 continue
             self.painter.button(
                 Rect(x, tv_y, 80, 24),
@@ -154,3 +157,5 @@ class ControlPanelView:
                 PanelAction("adjust_tv_value", {"index": tv_index, "field": "y_pos", "delta": 10}),
             )
             tv_y -= 46
+        total_tv_height = len(state.config.tv_mappings) * 148
+        self.max_scroll = max(0.0, float(total_tv_height - (tv_section_top - rect.y)))

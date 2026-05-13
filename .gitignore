@@ -1,4 +1,7 @@
 /tv_wall_mapper/*
 /.venv/
-/src/__pycache__/
 /python_port/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/

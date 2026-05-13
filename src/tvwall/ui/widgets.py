@@ -20,6 +20,13 @@ class InteractiveRegion:
 
 
 class WidgetPainter:
+    """Stateless painter that accumulates interactive regions during drawing.
+
+    Contract: hit_test() queries the regions built by the most recent draw pass.
+    draw() (via the owning view) must be called before hit_test() each frame;
+    reset() clears regions at the start of each draw, so stale regions are never hit.
+    """
+
     def __init__(self) -> None:
         self.regions: list[InteractiveRegion] = []
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import List
 
 from .constants import GRID_OPTIONS, LAYOUT_TO_COUNT, LAYOUT_ORDER, SOURCE_LABELS
 
@@ -59,8 +58,8 @@ class AppConfig:
     number_monitors: int = 1
     monitor_selected: int = 0
     monitor_focus: bool = False
-    monitor_data: List[MonitorConfig] = field(default_factory=lambda: [MonitorConfig()])
-    tv_mappings: List[TVMapping] = field(default_factory=lambda: [TVMapping()])
+    monitor_data: list[MonitorConfig] = field(default_factory=lambda: [MonitorConfig()])
+    tv_mappings: list[TVMapping] = field(default_factory=lambda: [TVMapping()])
 
     @classmethod
     def default_monitor(cls) -> MonitorConfig:
@@ -133,7 +132,6 @@ class AppState:
 
     @property
     def active_monitor(self) -> MonitorConfig:
-        self.config.ensure_lengths()
         return self.config.monitor_data[self.config.monitor_selected]
 
     @property

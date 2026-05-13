@@ -53,6 +53,8 @@ class LayoutService:
     @staticmethod
     def adjust_monitor_field(state: AppState, field_name: str, delta: int) -> None:
         monitor = state.active_monitor
+        if not hasattr(monitor, field_name):
+            return
         setattr(monitor, field_name, getattr(monitor, field_name) + delta)
         state.config.ensure_lengths()
         LayoutService.normalize_selection(state)
@@ -60,12 +62,16 @@ class LayoutService:
 
     @staticmethod
     def adjust_canvas_value(state: AppState, field_name: str, delta: int) -> None:
+        if not hasattr(state.config, field_name):
+            return
         setattr(state.config, field_name, max(1, getattr(state.config, field_name) + delta))
         state.mark_source_dirty()
 
     @staticmethod
     def adjust_tv_value(state: AppState, tv_index: int, field_name: str, delta: int) -> None:
         tv = state.config.tv_mappings[tv_index - 1]
+        if not hasattr(tv, field_name):
+            return
         setattr(tv, field_name, getattr(tv, field_name) + delta)
         state.mark_source_dirty()
 
@@ -130,7 +136,8 @@ class LayoutService:
             state.status_message = "Clicked outside any TV region"
             return False
         point = LayoutService.screen_to_canvas(rect, x, y, state.config)
-        assert point is not None
+        if point is None:
+            return False
         px, py = point
         state.selected_tv = hit
         tv = state.config.tv_mappings[hit - 1]
@@ -160,7 +167,7 @@ class LayoutService:
         state.mark_source_dirty()
 
     @staticmethod
-    def pack_tv_uniforms(mappings: list[TVMapping], start_index: int, count: int, max_count: int = 9) -> bytes:
+    def pack_tv_uniforms(mappings: list[TVMapping], start_index: int, count: int, max_count: int = 9) -> tuple[bytes, int]:
         packed = bytearray()
         safe_count = max(1, min(count, max_count))
         for offset in range(max_count):
