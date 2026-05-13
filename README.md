@@ -3,7 +3,7 @@
 ## Overview
 
 This is a Python translation of the `tv_wall_mapper` openFrameworks project under `tv_wall_mapper/`.
-The port focuses on the core mapping workflow: loading a wall configuration, editing TV rectangles with mouse and keyboard controls, previewing the map, and rendering the mapped output through an OpenGL shader.
+The app now uses a modular `pyglet + moderngl` architecture focused on the core mapping workflow: loading a wall configuration, editing TV rectangles with a proper in-window control panel, previewing the map, and rendering the mapped output through OpenGL shaders.
 
 ## Selected Python stack
 
@@ -13,7 +13,15 @@ The port focuses on the core mapping workflow: loading a wall configuration, edi
 
 Why this stack:
 - the source app is shader-driven and uses `ofShader` and `ofFbo`, so a GPU-backed Python port is a better fit than a pure CPU blit approach.
-- `pyglet` keeps the runtime smaller than recreating the full openFrameworks + ImGui setup in Python for a first working port.
+- `pyglet` keeps the runtime smaller than recreating the full openFrameworks + ImGui setup in Python while still giving us a flexible desktop UI surface.
+
+## Architecture
+
+- `src/tvwall/domain/`: config, runtime state, constants, and geometry
+- `src/tvwall/services/`: config persistence, mapping math, source generation
+- `src/tvwall/rendering/`: shader loading, GPU output rendering, viewport layout, map preview
+- `src/tvwall/ui/`: reusable panel widgets and the control panel view
+- `src/tvwall/app/`: controller, window bridge, and app entrypoint
 
 ## What works
 
@@ -21,7 +29,9 @@ Why this stack:
 - Uses the original TV-wall mapping concept with `1`, `2x2`, and `3x3` output layouts.
 - Includes both shipped testcards and a generated `TESTMAP` source.
 - Supports mouse selection, drag-to-move, shift/right-drag resize, and keyboard nudging.
-- Shows a live map preview and a shader-based output preview in one desktop window.
+- Provides a left-side control panel for source, monitor, canvas, map, and per-TV editing.
+- Loads GLSL from disk and keeps output composition on the GPU with `moderngl`.
+- Includes automated unit and smoke-style tests for config, layout, controller, source, and viewport behavior.
 
 ## Installation
 
@@ -37,32 +47,37 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
+## Test
+
+```bash
+python -m pytest -q
+```
+
 ## Controls
 
+- Use the left-side control panel for source selection, monitor settings, canvas size, grid size, and per-TV editing.
 - Left click a TV in the map preview to select it.
 - Drag with left mouse to move the selected TV.
 - Drag with right mouse, or hold `Shift` while dragging, to resize.
 - Arrow keys move the selected TV by the current grid size.
 - `Shift` + arrow keys resize by the current grid size.
-- `Alt` + left/right selects the previous or next TV.
+- `Alt` + left/right selects the previous or next visible TV.
 - `Alt` + up/down cycles the grid size.
-- `1`, `2`, `3` switch the monitor layout to `1`, `2x2`, `3x3`.
+- `1`, `2`, `3` switch the active monitor layout to `1`, `2x2`, `3x3`.
 - `I` cycles sources, `M` switches directly to `TESTMAP`.
-- `S` saves `config.json`, `L` reloads it.
-- `F` toggles fullscreen.
+- `S` saves `config.json`, `L` reloads it, `F` toggles fullscreen, `R` toggles the framerate overlay.
 
 ## Assets
 
 Original source assets were copied from `tv_wall_mapper/bin/data/` into [assets/source_data](./assets/source_data).
-That includes testcards, icons, and the original GLSL and GLES shader sources for reference.
+Adapted runtime shaders for the Python app live under [assets/shaders/glsl](./assets/shaders/glsl).
 
 ## Known limitations
 
 - This port intentionally ships as a single-window application. The original app can spawn multiple monitor windows.
 - Video capture device enumeration is not implemented yet.
 - NDI receive/send is not implemented yet.
-- The original ImGui control surface is replaced with keyboard, mouse, and on-screen text.
-- The Python app uses an adapted shader host instead of loading the original openFrameworks shader files directly.
+- Monitor editing is monitor-aware inside one window, but it does not yet create real per-monitor output windows.
 
 See [MIGRATION.md](./MIGRATION.md) and [TODO.md](./TODO.md) for the remaining work.
 

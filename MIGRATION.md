@@ -28,6 +28,7 @@ Chosen stack:
 - `pyglet`
 - `moderngl`
 - `Pillow`
+- `pytest`
 
 Why:
 - the source project is primarily an OpenGL mapping tool with shader-based output layouts.
@@ -43,15 +44,16 @@ Rejected alternatives:
 
 | openFrameworks | Python port |
 |---|---|
-| `setup()` | `MapperWindow.__init__()` |
-| `update()` | `MapperWindow._tick()` |
+| `setup()` | `MapperWindow.__init__()` plus controller/service initialization |
+| `update()` | `MapperWindow._tick()` with renderer-side source refresh |
 | `draw()` | `MapperWindow.on_draw()` |
-| `keyPressed()` / `keyReleased()` | `MapperWindow.on_key_press()` |
-| `mousePressed()` / `mouseDragged()` | `MapperWindow.on_mouse_press()` / `MapperWindow.on_mouse_drag()` |
-| `jsonLoad()` / `jsonSave()` | `AppConfig.from_json()` / `MapperWindow.save_config()` |
-| `ofShader` | `moderngl.Program` |
+| `keyPressed()` / `keyReleased()` | `MapperWindow.on_key_press()` routed through `AppController` |
+| `mousePressed()` / `mouseDragged()` | `MapperWindow` event bridge + `LayoutService` drag math |
+| `jsonLoad()` / `jsonSave()` | `ConfigRepository.load()` / `ConfigRepository.save()` |
+| `ofShader` | disk-loaded GLSL managed by `ShaderManager` and `OutputRenderer` |
 | `ofImage` testcards | `Pillow` images uploaded as textures |
-| `mapTest` FBO drawing | PIL-generated map texture plus pyglet preview overlay |
+| `mapTest` FBO drawing | `SourceService` map-test image generation plus `MapPreviewRenderer` |
+| ImGui settings panel | custom `pyglet` control panel in `src/tvwall/ui/` |
 
 ## Behavioral equivalence notes
 
@@ -61,15 +63,16 @@ Rejected alternatives:
   - Rotation behavior when a TV rectangle is taller than it is wide.
   - Core keyboard and mouse editing semantics.
   - JSON config structure close to the original app.
+  - Disk-based shader loading for the Python runtime.
+  - Automated validation of core mapping logic via `pytest`.
 
 - Partially preserved:
-  - Shader behavior is preserved conceptually, but the port uses one Python-side GLSL program instead of loading the original openFrameworks shader files as-is.
-  - Only one monitor configuration is previewed live at a time, even though multiple monitor entries can still exist in config data.
+  - The original monitor-oriented workflow is available inside a single-window control panel rather than through real extra output windows.
+  - The shader logic is adapted for Python and `moderngl`, rather than using the raw openFrameworks shader files directly.
 
 - Not yet preserved:
   - Camera input via `ofVideoGrabber`
   - NDI input/output
-  - ImGui settings UI
   - Separate GLFW windows per monitor output
 
 ## Manual migration items
@@ -77,4 +80,4 @@ Rejected alternatives:
 - Wire real video inputs into the `VIDEO SOURCE` model.
 - Add optional NDI support behind a feature flag or extra requirements file.
 - Expand single-window preview into real multi-window monitor outputs.
-- Revisit shader loading so adapted copies of the original GLSL files can be loaded from disk directly.
+- Consider broader UI smoke coverage if the control panel grows more complex.

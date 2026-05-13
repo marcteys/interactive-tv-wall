@@ -8,12 +8,12 @@
 
 ## medium
 
-- Replace the text-overlay controls with a proper desktop UI that exposes the full config surface from the original ImGui panel.
-- Load adapted GLSL shader files from `assets/` instead of keeping the Python-port shader embedded in `src/main.py`.
-- Add validation around `tv_first`, `tv_number`, and negative rectangle sizes so unusual layouts are easier to edit safely.
+- Add richer source handling beyond testcards and generated map-test content.
+- Add real monitor/output discovery and reflect it in the single-window monitor editor.
+- Add more UI smoke coverage around the control panel behavior.
 
 ## low
 
 - Add per-monitor fullscreen and output-display selection.
-- Carry over more of the original status/help wording from the openFrameworks UI.
+- Carry over more of the original help wording and tooltips from the openFrameworks UI.
 - Package the port with platform-specific launch instructions or frozen binaries.
