@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from tvwall.domain.models import AppConfig, MonitorConfig, TVMapping
@@ -36,4 +37,7 @@ class ConfigRepository:
 
     def save(self, path: Path, config: AppConfig) -> None:
         config.ensure_lengths()
-        path.write_text(json.dumps(config.to_json(), indent=2), encoding="utf-8")
+        payload = json.dumps(config.to_json(), indent=2)
+        temp_path = path.with_suffix(path.suffix + ".tmp")
+        temp_path.write_text(payload, encoding="utf-8")
+        os.replace(temp_path, path)

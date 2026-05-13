@@ -75,3 +75,15 @@ class OutputRenderer:
         program["u_tv_count"] = safe_count
         program["u_tvdata"].write(packed)
         self.vertex_arrays[monitor.tv_layout].render(moderngl.TRIANGLE_STRIP)
+
+    def release(self) -> None:
+        if self.texture is not None:
+            self.texture.release()
+            self.texture = None
+        for vao in self.vertex_arrays.values():
+            vao.release()
+        self.vertex_arrays.clear()
+        for program in self.programs.values():
+            program.release()
+        self.programs.clear()
+        self.quad_buffer.release()

@@ -159,3 +159,4 @@ class ControlPanelView:
             tv_y -= 46
         total_tv_height = len(state.config.tv_mappings) * 148
         self.max_scroll = max(0.0, float(total_tv_height - (tv_section_top - rect.y)))
+        self.painter.finish()

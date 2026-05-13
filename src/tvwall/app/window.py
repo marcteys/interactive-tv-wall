@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import moderngl
@@ -15,6 +16,8 @@ from tvwall.ui import ControlPanelView, PanelAction
 
 class MapperWindow(pyglet.window.Window):
     def __init__(self, project_root: Path) -> None:
+        self.logger = logging.getLogger("tvwall.window")
+        self._window_state_sync_pending = False
         self.project_root = project_root
         self.controller = AppController(project_root / "config.json")
         config = gl.Config(double_buffer=True, major_version=3, minor_version=3, depth_size=24)
@@ -26,6 +29,11 @@ class MapperWindow(pyglet.window.Window):
         self.output_renderer = OutputRenderer(self.ctx, ShaderManager(shader_dir))
         self.map_renderer = MapPreviewRenderer()
         self.panel = ControlPanelView()
+        self.overlay_batch = pyglet.graphics.Batch()
+        self.output_label = pyglet.text.Label("OUTPUT PREVIEW", x=0, y=0, batch=self.overlay_batch, color=(255, 255, 255, 255))
+        self.map_label = pyglet.text.Label("MAP PREVIEW", x=0, y=0, batch=self.overlay_batch, color=(255, 255, 255, 255))
+        self.status_label = pyglet.text.Label("", x=0, y=0, batch=self.overlay_batch, color=(215, 215, 225, 255))
+        self.fps_label = pyglet.text.Label("", x=0, y=0, batch=self.overlay_batch, color=(255, 90, 90, 255))
         pyglet.clock.schedule_interval(self._tick, 1.0 / max(self.controller.state.config.framerate, 1))
 
     def _reschedule_tick(self) -> None:
@@ -33,43 +41,76 @@ class MapperWindow(pyglet.window.Window):
         pyglet.clock.schedule_interval(self._tick, 1.0 / max(self.controller.state.config.framerate, 1))
 
     def _tick(self, dt: float) -> None:
-        self.output_renderer.ensure_source(self.controller.state, self.source_service)
+        try:
+            self.output_renderer.ensure_source(self.controller.state, self.source_service)
+        except Exception:
+            self.controller.state.status_message = "Background refresh failed"
+            self.logger.exception("Source refresh failed")
 
     def _layout(self) -> ViewportLayout:
         return ViewportLayout.compute(self.width, self.height)
 
     def on_draw(self) -> None:
-        self.clear()
-        self.ctx.clear(0.05, 0.05, 0.07, 1.0)
-        layout = self._layout()
-        state = self.controller.state
+        try:
+            self.clear()
+            self.ctx.clear(0.05, 0.05, 0.07, 1.0)
+            layout = self._layout()
+            state = self.controller.state
 
-        self.panel.draw(state, layout.panel_rect)
-        if not state.config.hide_preview:
-            self.output_renderer.ensure_source(state, self.source_service)
-            self.output_renderer.render(state, layout.output_rect)
-            self.ctx.viewport = (0, 0, self.width, self.height)
-        if not state.config.hide_maptest:
-            self.map_renderer.draw(state, layout.map_rect)
+            self.panel.draw(state, layout.panel_rect)
+            if not state.config.hide_preview:
+                self.output_renderer.ensure_source(state, self.source_service)
+                self.output_renderer.render(state, layout.output_rect)
+                self.ctx.viewport = (0, 0, self.width, self.height)
+            if not state.config.hide_maptest:
+                self.map_renderer.draw(state, layout.map_rect)
 
-        pyglet.text.Label("OUTPUT PREVIEW", x=layout.output_rect.x, y=layout.output_rect.top + 8, color=(255, 255, 255, 255)).draw()
-        pyglet.text.Label("MAP PREVIEW", x=layout.map_rect.x, y=layout.map_rect.top + 8, color=(255, 255, 255, 255)).draw()
-        status = f"{state.status_message} | Source: {state.current_source_index + 1}/{len(self.source_service.labels())} | Grid: {state.grid_size}mm"
-        pyglet.text.Label(status, x=layout.footer_rect.x, y=layout.footer_rect.y + 8, color=(215, 215, 225, 255)).draw()
-        if state.show_framerate:
-            fps = round(pyglet.clock.get_fps())
-            pyglet.text.Label(f"FPS: {fps}", x=self.width - 88, y=14, color=(255, 90, 90, 255)).draw()
+            self.output_label.text = "OUTPUT PREVIEW"
+            self.output_label.x = layout.output_rect.x
+            self.output_label.y = layout.output_rect.top + 8
+            self.output_label.visible = True
+            self.map_label.text = "MAP PREVIEW"
+            self.map_label.x = layout.map_rect.x
+            self.map_label.y = layout.map_rect.top + 8
+            self.map_label.visible = True
+            self.status_label.text = (
+                f"{state.status_message} | Source: {state.current_source_index + 1}/{len(self.source_service.labels())} | Grid: {state.grid_size}mm"
+            )
+            self.status_label.x = layout.footer_rect.x
+            self.status_label.y = layout.footer_rect.y + 8
+            self.status_label.visible = True
+            if state.show_framerate:
+                fps = round(pyglet.clock.get_fps())
+                self.fps_label.text = f"FPS: {fps}"
+                self.fps_label.x = self.width - 88
+                self.fps_label.y = 14
+                self.fps_label.visible = True
+            else:
+                self.fps_label.visible = False
+            self.overlay_batch.draw()
+        except Exception:
+            self.controller.state.status_message = "Render failed"
+            self.logger.exception("Draw failed")
 
-    def _apply_window_state(self) -> None:
-        if self.fullscreen != self.controller.state.active_monitor.is_fullscreen:
-            self.set_fullscreen(self.controller.state.active_monitor.is_fullscreen)
+    def _request_window_state_sync(self) -> None:
+        if self._window_state_sync_pending:
+            return
+        self._window_state_sync_pending = True
+        pyglet.clock.schedule_once(self._apply_window_state, 0.0)
+
+    def _apply_window_state(self, dt: float = 0.0) -> None:
+        self._window_state_sync_pending = False
+        desired_fullscreen = self.controller.state.active_monitor.is_fullscreen
+        if self.fullscreen != desired_fullscreen:
+            self.set_fullscreen(desired_fullscreen)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         action = self.panel.hit_test(x, y)
         if action is not None:
             self.controller.handle_action(action)
-            self._reschedule_tick()
-            self._apply_window_state()
+            if action.command == "load":
+                self._reschedule_tick()
+            self._request_window_state_sync()
             return
         layout = self._layout()
         if button == mouse.LEFT or button == mouse.RIGHT:
@@ -89,8 +130,7 @@ class MapperWindow(pyglet.window.Window):
         shift_pressed = bool(modifiers & key.MOD_SHIFT)
         if symbol == key.F:
             self.controller.handle_action(PanelAction("toggle_fullscreen"))
-            self._reschedule_tick()
-            self._apply_window_state()
+            self._request_window_state_sync()
             return
         if symbol == key.R:
             self.controller.handle_action(PanelAction("toggle_framerate"))
@@ -101,7 +141,7 @@ class MapperWindow(pyglet.window.Window):
         if symbol == key.L:
             self.controller.load()
             self._reschedule_tick()
-            self._apply_window_state()
+            self._request_window_state_sync()
             return
         if symbol == key.I:
             self.controller.cycle_source()
@@ -112,7 +152,6 @@ class MapperWindow(pyglet.window.Window):
         if symbol in (key._1, key._2, key._3):
             layout = {key._1: 0, key._2: 1, key._3: 2}[symbol]
             self.controller.handle_action(PanelAction("set_layout", {"index": layout}))
-            self._reschedule_tick()
             return
         if alt_pressed:
             if symbol == key.LEFT:
@@ -134,3 +173,12 @@ class MapperWindow(pyglet.window.Window):
             self.controller.keyboard_move(y_direction=-1, resize=resize)
         elif symbol == key.DOWN:
             self.controller.keyboard_move(y_direction=1, resize=resize)
+
+    def on_close(self) -> None:
+        pyglet.clock.unschedule(self._tick)
+        pyglet.clock.unschedule(self._apply_window_state)
+        try:
+            self.output_renderer.release()
+        except Exception:
+            self.logger.exception("Renderer release failed")
+        super().on_close()
