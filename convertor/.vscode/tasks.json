@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "OF Python: Analyze project",
+      "type": "shell",
+      "command": "python convertor/scripts/analyze_of_project.py . --output convertor/of_project_inventory.json",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "OF Python: Validate generated project",
+      "type": "shell",
+      "command": "python convertor/scripts/validate_python_project.py .",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "OF Python: Run generated project",
+      "type": "shell",
+      "command": "python src/main.py",
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "OF Python: Create venv and install requirements",
+      "type": "shell",
+      "command": "python -m venv .venv && .venv/bin/python -m pip install -r requirements.txt",
+      "group": "build",
+      "problemMatcher": [],
+      "linux": {
+        "command": "python -m venv .venv && .venv/bin/python -m pip install -r requirements.txt"
+      },
+      "osx": {
+        "command": "python -m venv .venv && .venv/bin/python -m pip install -r requirements.txt"
+      },
+      "windows": {
+        "command": "python -m venv .venv; .venv/Scripts/python.exe -m pip install -r requirements.txt"
+      }
+    }
+  ]
+}

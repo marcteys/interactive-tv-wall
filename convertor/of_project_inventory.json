@@ -1,0 +1,240 @@
+{
+  "project_root": "C:\\Users\\marct\\Documents\\interactive-tv-wall\\tv_wall_mapper",
+  "files": [
+    {
+      "path": "addons.make",
+      "kind": "text",
+      "bytes": 23
+    },
+    {
+      "path": "config.make",
+      "kind": "text",
+      "bytes": 6505
+    },
+    {
+      "path": "README.md",
+      "kind": "text",
+      "bytes": 21836
+    },
+    {
+      "path": "src\\main.cpp",
+      "kind": "text",
+      "bytes": 1580
+    },
+    {
+      "path": "src\\ofApp.cpp",
+      "kind": "text",
+      "bytes": 44004
+    },
+    {
+      "path": "src\\ofApp.h",
+      "kind": "text",
+      "bytes": 3401
+    },
+    {
+      "path": "bin\\data\\arial.ttf",
+      "kind": "asset",
+      "bytes": 367112
+    },
+    {
+      "path": "bin\\data\\icon.jpg",
+      "kind": "asset",
+      "bytes": 76387
+    },
+    {
+      "path": "bin\\data\\icon.png",
+      "kind": "asset",
+      "bytes": 43082
+    },
+    {
+      "path": "bin\\data\\testcard_01.png",
+      "kind": "asset",
+      "bytes": 102325
+    },
+    {
+      "path": "bin\\data\\testcard_grid.jpg",
+      "kind": "asset",
+      "bytes": 210535
+    },
+    {
+      "path": "bin\\data\\gles\\1output.frag",
+      "kind": "text",
+      "bytes": 1056
+    },
+    {
+      "path": "bin\\data\\gles\\2x2output.frag",
+      "kind": "text",
+      "bytes": 1872
+    },
+    {
+      "path": "bin\\data\\gles\\3x3output.frag",
+      "kind": "text",
+      "bytes": 3170
+    },
+    {
+      "path": "bin\\data\\gles\\default.vert",
+      "kind": "text",
+      "bytes": 132
+    },
+    {
+      "path": "bin\\data\\glsl\\1output.frag",
+      "kind": "text",
+      "bytes": 1159
+    },
+    {
+      "path": "bin\\data\\glsl\\2x2output.frag",
+      "kind": "text",
+      "bytes": 1908
+    },
+    {
+      "path": "bin\\data\\glsl\\3x3output.frag",
+      "kind": "text",
+      "bytes": 3170
+    },
+    {
+      "path": "bin\\data\\glsl\\default.vert",
+      "kind": "text",
+      "bytes": 273
+    },
+    {
+      "path": "bin\\data\\rgba2yuv\\ES2\\rgba2yuv.frag",
+      "kind": "text",
+      "bytes": 1529
+    },
+    {
+      "path": "bin\\data\\rgba2yuv\\ES2\\rgba2yuv.vert",
+      "kind": "text",
+      "bytes": 330
+    },
+    {
+      "path": "bin\\data\\rgba2yuv\\GL2\\rgba2yuv.frag",
+      "kind": "text",
+      "bytes": 1462
+    },
+    {
+      "path": "bin\\data\\rgba2yuv\\GL2\\rgba2yuv.vert",
+      "kind": "text",
+      "bytes": 123
+    },
+    {
+      "path": "bin\\data\\rgba2yuv\\GL3\\rgba2yuv.frag",
+      "kind": "text",
+      "bytes": 1414
+    },
+    {
+      "path": "bin\\data\\rgba2yuv\\GL3\\rgba2yuv.vert",
+      "kind": "text",
+      "bytes": 385
+    }
+  ],
+  "addons": [
+    "ofxImGui",
+    "ofxJSON",
+    "ofxNDI"
+  ],
+  "lifecycle_methods": [
+    "draw",
+    "exit",
+    "keyPressed",
+    "keyReleased",
+    "mouseDragged",
+    "mousePressed",
+    "setup",
+    "update"
+  ],
+  "detected_categories": [
+    "graphics_2d",
+    "opengl_3d",
+    "image_video",
+    "math_simulation"
+  ],
+  "category_evidence": {
+    "graphics_2d": [
+      {
+        "file": "src\\ofApp.cpp",
+        "patterns": [
+          "ofDraw",
+          "ofSetColor"
+        ]
+      }
+    ],
+    "opengl_3d": [
+      {
+        "file": "src\\ofApp.h",
+        "patterns": [
+          "ofShader",
+          "ofFbo"
+        ]
+      }
+    ],
+    "image_video": [
+      {
+        "file": "src\\ofApp.cpp",
+        "patterns": [
+          "ofVideo"
+        ]
+      },
+      {
+        "file": "src\\ofApp.h",
+        "patterns": [
+          "ofImage",
+          "ofVideo",
+          "ofVideoGrabber",
+          "ofTexture"
+        ]
+      }
+    ],
+    "audio": [],
+    "gui": [],
+    "serial_hardware": [],
+    "network": [],
+    "math_simulation": [
+      {
+        "file": "src\\ofApp.cpp",
+        "patterns": [
+          "glm::"
+        ]
+      }
+    ]
+  },
+  "assets": [
+    {
+      "path": "bin\\data\\arial.ttf",
+      "bytes": 367112
+    },
+    {
+      "path": "bin\\data\\icon.jpg",
+      "bytes": 76387
+    },
+    {
+      "path": "bin\\data\\icon.png",
+      "bytes": 43082
+    },
+    {
+      "path": "bin\\data\\testcard_01.png",
+      "bytes": 102325
+    },
+    {
+      "path": "bin\\data\\testcard_grid.jpg",
+      "bytes": 210535
+    }
+  ],
+  "shaders": [
+    "bin\\data\\gles\\1output.frag",
+    "bin\\data\\gles\\2x2output.frag",
+    "bin\\data\\gles\\3x3output.frag",
+    "bin\\data\\gles\\default.vert",
+    "bin\\data\\glsl\\1output.frag",
+    "bin\\data\\glsl\\2x2output.frag",
+    "bin\\data\\glsl\\3x3output.frag",
+    "bin\\data\\glsl\\default.vert",
+    "bin\\data\\rgba2yuv\\ES2\\rgba2yuv.frag",
+    "bin\\data\\rgba2yuv\\ES2\\rgba2yuv.vert",
+    "bin\\data\\rgba2yuv\\GL2\\rgba2yuv.frag",
+    "bin\\data\\rgba2yuv\\GL2\\rgba2yuv.vert",
+    "bin\\data\\rgba2yuv\\GL3\\rgba2yuv.frag",
+    "bin\\data\\rgba2yuv\\GL3\\rgba2yuv.vert"
+  ],
+  "suggested_project_type": "opengl_or_shader_graphics",
+  "recommended_next_step": "Ask the VS Code agent to generate the Python app at the repository root using convertor/.github/copilot-instructions.md and convertor/docs/framework-selection.md."
+}

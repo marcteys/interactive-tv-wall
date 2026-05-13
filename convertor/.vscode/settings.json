@@ -1,0 +1,12 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "convertor/.github/copilot-instructions.md"
+    }
+  ]
+}

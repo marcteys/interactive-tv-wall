@@ -1,0 +1,52 @@
+{
+  "hide_maptest": false,
+  "hide_preview": false,
+  "set_resolutions": false,
+  "input_width": 1920,
+  "input_height": 1080,
+  "framerate": 30,
+  "number_tvs": 4,
+  "selected_input_index": 0,
+  "canvas_width": 5000,
+  "canvas_height": 3000,
+  "number_monitors": 1,
+  "monitor_selected": 0,
+  "monitor_focus": false,
+  "monitor_data": [
+    {
+      "output_to_monitor": true,
+      "output_to_ndi": false,
+      "is_fullscreen": false,
+      "display_index": 0,
+      "tv_number": 4,
+      "tv_first": 1,
+      "tv_layout": "2x2"
+    }
+  ],
+  "tv_mappings": [
+    {
+      "width": 1100,
+      "height": 650,
+      "x_pos": 0,
+      "y_pos": 0
+    },
+    {
+      "width": 1100,
+      "height": 650,
+      "x_pos": 1200,
+      "y_pos": 0
+    },
+    {
+      "width": 1100,
+      "height": 650,
+      "x_pos": 0,
+      "y_pos": 800
+    },
+    {
+      "width": 1100,
+      "height": 650,
+      "x_pos": 1200,
+      "y_pos": 800
+    }
+  ]
+}
