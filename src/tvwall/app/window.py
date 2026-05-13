@@ -6,6 +6,7 @@ from pathlib import Path
 import moderngl
 import pyglet
 from pyglet import gl
+from pyglet import shapes
 from pyglet.window import key, mouse
 
 from tvwall.app.controller import AppController
@@ -34,6 +35,22 @@ class MapperWindow(pyglet.window.Window):
         self.map_label = pyglet.text.Label("MAP PREVIEW", x=0, y=0, batch=self.overlay_batch, color=(255, 255, 255, 255))
         self.status_label = pyglet.text.Label("", x=0, y=0, batch=self.overlay_batch, color=(215, 215, 225, 255))
         self.fps_label = pyglet.text.Label("", x=0, y=0, batch=self.overlay_batch, color=(255, 90, 90, 255))
+        self.tooltip_background = shapes.BorderedRectangle(
+            0, 0, 1, 1, border=1, color=(28, 28, 34), border_color=(90, 90, 104), batch=self.overlay_batch
+        )
+        self.tooltip_label = pyglet.text.Label(
+            "",
+            x=0,
+            y=0,
+            width=260,
+            multiline=True,
+            batch=self.overlay_batch,
+            color=(245, 245, 250, 255),
+        )
+        self.tooltip_background.visible = False
+        self.tooltip_label.visible = False
+        self._mouse_x = 0
+        self._mouse_y = 0
         pyglet.clock.schedule_interval(self._tick, 1.0 / max(self.controller.state.config.framerate, 1))
 
     def _reschedule_tick(self) -> None:
@@ -87,10 +104,44 @@ class MapperWindow(pyglet.window.Window):
                 self.fps_label.visible = True
             else:
                 self.fps_label.visible = False
+            self._update_tooltip()
             self.overlay_batch.draw()
         except Exception:
             self.controller.state.status_message = "Render failed"
             self.logger.exception("Draw failed")
+
+    def _update_tooltip(self) -> None:
+        tooltip = self.panel.tooltip_at(self._mouse_x, self._mouse_y)
+        if not tooltip:
+            self.tooltip_background.visible = False
+            self.tooltip_label.visible = False
+            return
+
+        self.tooltip_label.text = tooltip
+        self.tooltip_label.width = 260
+        self.tooltip_label.multiline = True
+        self.tooltip_label.anchor_x = "left"
+        self.tooltip_label.anchor_y = "top"
+
+        padding = 8
+        tooltip_width = min(260, max(140, self.tooltip_label.content_width))
+        tooltip_height = self.tooltip_label.content_height
+        max_x = self.width - tooltip_width - padding * 2 - 8
+        max_y = self.height - 8
+        tooltip_x = min(self._mouse_x + 14, max_x)
+        tooltip_y = min(self._mouse_y - 14, max_y)
+        if tooltip_y - tooltip_height - padding * 2 < 0:
+            tooltip_y = min(self.height - 8, self._mouse_y + tooltip_height + padding * 2 + 6)
+
+        self.tooltip_background.x = tooltip_x
+        self.tooltip_background.y = tooltip_y - tooltip_height - padding * 2
+        self.tooltip_background.width = tooltip_width + padding * 2
+        self.tooltip_background.height = tooltip_height + padding * 2
+        self.tooltip_background.visible = True
+
+        self.tooltip_label.x = tooltip_x + padding
+        self.tooltip_label.y = tooltip_y - padding
+        self.tooltip_label.visible = True
 
     def _request_window_state_sync(self) -> None:
         if self._window_state_sync_pending:
@@ -117,11 +168,19 @@ class MapperWindow(pyglet.window.Window):
             self.controller.begin_drag(layout.map_rect, x, y)
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int) -> None:
+        self._mouse_x = x
+        self._mouse_y = y
         layout = self._layout()
         resize = bool(buttons & mouse.RIGHT or modifiers & key.MOD_SHIFT)
         self.controller.drag_selected(layout.map_rect, x, y, resize)
 
+    def on_mouse_motion(self, x: int, y: int, dx: int, dy: int) -> None:
+        self._mouse_x = x
+        self._mouse_y = y
+
     def on_mouse_scroll(self, x: int, y: int, scroll_x: float, scroll_y: float) -> None:
+        self._mouse_x = x
+        self._mouse_y = y
         if self._layout().panel_rect.contains(x, y):
             self.panel.scroll(-scroll_y * 24)
 

@@ -18,6 +18,7 @@ class PanelAction:
 class InteractiveRegion:
     rect: Rect
     action: PanelAction
+    tooltip: str | None = None
 
 
 class WidgetPainter:
@@ -45,6 +46,12 @@ class WidgetPainter:
         for region in reversed(self.regions):
             if region.rect.contains(x, y):
                 return region.action
+        return None
+
+    def tooltip_at(self, x: float, y: float) -> str | None:
+        for region in reversed(self.regions):
+            if region.tooltip and region.rect.contains(x, y):
+                return region.tooltip
         return None
 
     def _acquire_shape(self) -> shapes.BorderedRectangle:
@@ -103,7 +110,7 @@ class WidgetPainter:
         label.anchor_y = "baseline"
         label.color = (210, 210, 220, 255)
 
-    def button(self, rect: Rect, label: str, action: PanelAction, active: bool = False) -> None:
+    def button(self, rect: Rect, label: str, action: PanelAction, active: bool = False, tooltip: str | None = None) -> None:
         fill = (72, 92, 170) if active else (42, 42, 50)
         border = (106, 130, 240) if active else (82, 82, 94)
         shape = self._acquire_shape()
@@ -123,20 +130,41 @@ class WidgetPainter:
         text_label.anchor_x = "center"
         text_label.anchor_y = "center"
         text_label.color = (255, 255, 255, 255)
-        self.regions.append(InteractiveRegion(rect, action))
+        self.regions.append(InteractiveRegion(rect, action, tooltip))
 
-    def toggle(self, rect: Rect, label: str, value: bool, action: PanelAction) -> None:
+    def toggle(self, rect: Rect, label: str, value: bool, action: PanelAction, tooltip: str | None = None) -> None:
         state = "ON" if value else "OFF"
-        self.button(rect, f"{label}: {state}", action, active=value)
+        self.button(rect, f"{label}: {state}", action, active=value, tooltip=tooltip)
 
-    def segmented(self, x: float, y: float, width: float, height: float, labels: list[str], selected: int, command: str) -> None:
+    def segmented(
+        self,
+        x: float,
+        y: float,
+        width: float,
+        height: float,
+        labels: list[str],
+        selected: int,
+        command: str,
+        tooltips: list[str] | None = None,
+    ) -> None:
         gap = 6
         segment_width = max(60, (width - gap * (len(labels) - 1)) / max(len(labels), 1))
         for index, label in enumerate(labels):
             rect = Rect(x + index * (segment_width + gap), y, segment_width, height)
-            self.button(rect, label, PanelAction(command, {"index": index}), active=index == selected)
+            tooltip = tooltips[index] if tooltips and index < len(tooltips) else None
+            self.button(rect, label, PanelAction(command, {"index": index}), active=index == selected, tooltip=tooltip)
 
-    def stepper(self, x: float, y: float, width: float, label: str, value: str, minus_action: PanelAction, plus_action: PanelAction) -> None:
+    def stepper(
+        self,
+        x: float,
+        y: float,
+        width: float,
+        label: str,
+        value: str,
+        minus_action: PanelAction,
+        plus_action: PanelAction,
+        tooltip: str | None = None,
+    ) -> None:
         text_label = self._acquire_label()
         text_label.text = label
         text_label.x = x
@@ -149,7 +177,7 @@ class WidgetPainter:
         minus_rect = Rect(x, y, 28, 22)
         value_rect = Rect(x + 32, y, width - 64, 22)
         plus_rect = Rect(x + width - 28, y, 28, 22)
-        self.button(minus_rect, "-", minus_action)
+        self.button(minus_rect, "-", minus_action, tooltip=tooltip)
         shape = self._acquire_shape()
         shape.x = value_rect.x
         shape.y = value_rect.y
@@ -166,4 +194,5 @@ class WidgetPainter:
         value_label.anchor_x = "center"
         value_label.anchor_y = "center"
         value_label.color = (245, 245, 245, 255)
-        self.button(plus_rect, "+", plus_action)
+        self.regions.append(InteractiveRegion(value_rect, minus_action, tooltip))
+        self.button(plus_rect, "+", plus_action, tooltip=tooltip)
