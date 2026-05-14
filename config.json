@@ -6,7 +6,7 @@
   "input_height": 1080,
   "framerate": 30,
   "number_tvs": 4,
-  "selected_input_index": 0,
+  "selected_input_index": 1,
   "canvas_width": 5000,
   "canvas_height": 3000,
   "number_monitors": 1,
@@ -27,26 +27,26 @@
     {
       "width": 1100,
       "height": 650,
-      "x_pos": 0,
-      "y_pos": 0
+      "x_pos": 391,
+      "y_pos": 342
+    },
+    {
+      "width": 1100,
+      "height": 660,
+      "x_pos": 2270,
+      "y_pos": 248
     },
     {
       "width": 1100,
       "height": 650,
-      "x_pos": 1200,
-      "y_pos": 0
+      "x_pos": 324,
+      "y_pos": 1669
     },
     {
       "width": 1100,
       "height": 650,
-      "x_pos": 0,
-      "y_pos": 800
-    },
-    {
-      "width": 1100,
-      "height": 650,
-      "x_pos": 1200,
-      "y_pos": 800
+      "x_pos": 1872,
+      "y_pos": 1487
     }
   ]
 }

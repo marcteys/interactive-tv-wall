@@ -31,6 +31,9 @@ class OutputRenderer:
         self.vertex_arrays: dict[str, moderngl.VertexArray] = {}
         self.ctx.enable(moderngl.BLEND)
 
+    def invalidate(self) -> None:
+        self.last_source_revision = -1
+
     def _get_program(self, layout: str) -> moderngl.Program:
         if layout not in self.programs:
             vertex, fragment = self.shader_manager.load_sources(layout)
@@ -38,6 +41,12 @@ class OutputRenderer:
             self.programs[layout] = program
             self.vertex_arrays[layout] = self.ctx.simple_vertex_array(program, self.quad_buffer, "in_pos", "in_uv")
         return self.programs[layout]
+
+    def _configure_draw_state(self) -> None:
+        self.ctx.screen.use()
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        self.ctx.disable(moderngl.CULL_FACE)
+        self.ctx.enable(moderngl.BLEND)
 
     def _ensure_texture(self, image: Image.Image) -> None:
         flipped = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
@@ -58,6 +67,22 @@ class OutputRenderer:
         self._ensure_texture(image)
         self.last_source_revision = state.source_revision
 
+    @staticmethod
+    def _set_uniform(program: moderngl.Program, name: str, value: object) -> bool:
+        try:
+            program[name] = value
+        except KeyError:
+            return False
+        return True
+
+    @staticmethod
+    def _write_uniform(program: moderngl.Program, name: str, data: bytes) -> bool:
+        try:
+            program[name].write(data)
+        except KeyError:
+            return False
+        return True
+
     def render(self, state: AppState, rect: Rect) -> None:
         if self.texture is None or rect.width <= 0 or rect.height <= 0:
             return
@@ -68,12 +93,13 @@ class OutputRenderer:
             max(0, monitor.tv_first - 1),
             monitor.tv_number,
         )
+        self._configure_draw_state()
         self.ctx.viewport = (int(rect.x), int(rect.y), int(rect.width), int(rect.height))
         self.texture.use(0)
-        program["u_tex0"] = 0
-        program["u_canvas"] = (state.config.canvas_width, state.config.canvas_height)
-        program["u_tv_count"] = safe_count
-        program["u_tvdata"].write(packed)
+        self._set_uniform(program, "u_tex0", 0)
+        self._set_uniform(program, "u_canvas", (state.config.canvas_width, state.config.canvas_height))
+        self._set_uniform(program, "u_tv_count", safe_count)
+        self._write_uniform(program, "u_tvdata", packed)
         self.vertex_arrays[monitor.tv_layout].render(moderngl.TRIANGLE_STRIP)
 
     def release(self) -> None:

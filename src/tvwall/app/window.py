@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from pathlib import Path
+from time import perf_counter
 
 import moderngl
 import pyglet
@@ -51,6 +53,7 @@ class MapperWindow(pyglet.window.Window):
         self.tooltip_label.visible = False
         self._mouse_x = 0
         self._mouse_y = 0
+        self._frame_timestamps: deque[float] = deque(maxlen=120)
         pyglet.clock.schedule_interval(self._tick, 1.0 / max(self.controller.state.config.framerate, 1))
 
     def _reschedule_tick(self) -> None:
@@ -67,10 +70,24 @@ class MapperWindow(pyglet.window.Window):
     def _layout(self) -> ViewportLayout:
         return ViewportLayout.compute(self.width, self.height)
 
+    def _sample_fps(self) -> int:
+        now = perf_counter()
+        self._frame_timestamps.append(now)
+        while len(self._frame_timestamps) > 1 and now - self._frame_timestamps[0] > 1.0:
+            self._frame_timestamps.popleft()
+        if len(self._frame_timestamps) < 2:
+            return 0
+        elapsed = now - self._frame_timestamps[0]
+        if elapsed <= 0:
+            return 0
+        return round((len(self._frame_timestamps) - 1) / elapsed)
+
     def on_draw(self) -> None:
         try:
             self.clear()
-            self.ctx.clear(0.05, 0.05, 0.07, 1.0)
+            self.ctx.screen.use()
+            self.ctx.disable(moderngl.DEPTH_TEST)
+            self.ctx.clear(0.05, 0.05, 0.07, 1.0, depth=1.0)
             layout = self._layout()
             state = self.controller.state
 
@@ -97,13 +114,14 @@ class MapperWindow(pyglet.window.Window):
             self.status_label.y = layout.footer_rect.y + 8
             self.status_label.visible = True
             if state.show_framerate:
-                fps = round(pyglet.clock.get_fps())
+                fps = self._sample_fps()
                 self.fps_label.text = f"FPS: {fps}"
                 self.fps_label.x = self.width - 88
                 self.fps_label.y = 14
                 self.fps_label.visible = True
             else:
                 self.fps_label.visible = False
+                self._frame_timestamps.clear()
             self._update_tooltip()
             self.overlay_batch.draw()
         except Exception:
@@ -154,8 +172,21 @@ class MapperWindow(pyglet.window.Window):
         desired_fullscreen = self.controller.state.active_monitor.is_fullscreen
         if self.fullscreen != desired_fullscreen:
             self.set_fullscreen(desired_fullscreen)
+            self.output_renderer.invalidate()
+            self._frame_timestamps.clear()
+
+    def on_resize(self, width: int, height: int) -> None:
+        if width > 0 and height > 0:
+            self.ctx.screen.use()
+            self.ctx.viewport = (0, 0, width, height)
+            self.output_renderer.invalidate()
+        super().on_resize(width, height)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
+        self._mouse_x = x
+        self._mouse_y = y
+        if button == mouse.LEFT and self.panel.begin_scroll_drag(x, y):
+            return
         action = self.panel.hit_test(x, y)
         if action is not None:
             self.controller.handle_action(action)
@@ -170,9 +201,14 @@ class MapperWindow(pyglet.window.Window):
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int) -> None:
         self._mouse_x = x
         self._mouse_y = y
+        if self.panel.drag_scrollbar(y):
+            return
         layout = self._layout()
         resize = bool(buttons & mouse.RIGHT or modifiers & key.MOD_SHIFT)
         self.controller.drag_selected(layout.map_rect, x, y, resize)
+
+    def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
+        self.panel.end_scroll_drag()
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int) -> None:
         self._mouse_x = x
@@ -185,6 +221,12 @@ class MapperWindow(pyglet.window.Window):
             self.panel.scroll(-scroll_y * 24)
 
     def on_key_press(self, symbol: int, modifiers: int) -> None:
+        panel_action = self.panel.handle_key_press(symbol)
+        if panel_action is not None:
+            if panel_action.command != "noop":
+                self.controller.handle_action(panel_action)
+                self._request_window_state_sync()
+            return
         alt_pressed = bool(modifiers & key.MOD_ALT)
         shift_pressed = bool(modifiers & key.MOD_SHIFT)
         if symbol == key.F:
@@ -232,6 +274,9 @@ class MapperWindow(pyglet.window.Window):
             self.controller.keyboard_move(y_direction=-1, resize=resize)
         elif symbol == key.DOWN:
             self.controller.keyboard_move(y_direction=1, resize=resize)
+
+    def on_text(self, text: str) -> None:
+        self.panel.handle_text(text)
 
     def on_close(self) -> None:
         pyglet.clock.unschedule(self._tick)

@@ -6,6 +6,18 @@ from tvwall.domain.models import AppConfig, AppState, Rect, TVMapping
 
 class LayoutService:
     @staticmethod
+    def _assign_new_monitor_defaults(config: AppConfig, start_index: int) -> None:
+        next_tv = 1
+        for monitor in config.monitor_data[:start_index]:
+            next_tv = max(next_tv, monitor.tv_first + monitor.tv_number)
+        for monitor in config.monitor_data[start_index:]:
+            layout_count = LAYOUT_TO_COUNT.get(monitor.tv_layout, 1)
+            monitor.tv_first = min(next_tv, config.number_tvs)
+            remaining = max(1, config.number_tvs - monitor.tv_first + 1)
+            monitor.tv_number = min(layout_count, remaining)
+            next_tv = monitor.tv_first + monitor.tv_number
+
+    @staticmethod
     def visible_tv_indices(state: AppState) -> list[int]:
         config = state.config
         if not config.monitor_focus:
@@ -47,8 +59,11 @@ class LayoutService:
 
     @staticmethod
     def adjust_monitor_count(config: AppConfig, delta: int) -> None:
+        previous_count = len(config.monitor_data)
         config.number_monitors = max(1, config.number_monitors + delta)
         config.ensure_lengths()
+        if len(config.monitor_data) > previous_count:
+            LayoutService._assign_new_monitor_defaults(config, previous_count)
 
     @staticmethod
     def adjust_monitor_field(state: AppState, field_name: str, delta: int) -> None:
@@ -68,11 +83,37 @@ class LayoutService:
         state.mark_source_dirty()
 
     @staticmethod
+    def set_monitor_field(state: AppState, field_name: str, value: int) -> None:
+        monitor = state.active_monitor
+        if not hasattr(monitor, field_name):
+            return
+        setattr(monitor, field_name, value)
+        state.config.ensure_lengths()
+        LayoutService.normalize_selection(state)
+        state.mark_config_dirty()
+
+    @staticmethod
+    def set_canvas_value(state: AppState, field_name: str, value: int) -> None:
+        if not hasattr(state.config, field_name):
+            return
+        setattr(state.config, field_name, max(1, value))
+        state.config.ensure_lengths()
+        state.mark_source_dirty()
+
+    @staticmethod
     def adjust_tv_value(state: AppState, tv_index: int, field_name: str, delta: int) -> None:
         tv = state.config.tv_mappings[tv_index - 1]
         if not hasattr(tv, field_name):
             return
         setattr(tv, field_name, getattr(tv, field_name) + delta)
+        state.mark_source_dirty()
+
+    @staticmethod
+    def set_tv_value(state: AppState, tv_index: int, field_name: str, value: int) -> None:
+        tv = state.config.tv_mappings[tv_index - 1]
+        if not hasattr(tv, field_name):
+            return
+        setattr(tv, field_name, value)
         state.mark_source_dirty()
 
     @staticmethod

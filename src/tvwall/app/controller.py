@@ -54,6 +54,16 @@ class AppController:
             LayoutService.adjust_monitor_count(self.state.config, payload["delta"])
             LayoutService.normalize_selection(self.state)
             self.state.mark_config_dirty()
+        elif action.command == "set_monitor_count":
+            previous_count = len(self.state.config.monitor_data)
+            self.state.config.number_monitors = max(1, int(payload["value"]))
+            previous_selected = self.state.config.monitor_selected
+            self.state.config.ensure_lengths()
+            if len(self.state.config.monitor_data) > previous_count:
+                LayoutService._assign_new_monitor_defaults(self.state.config, previous_count)
+            if self.state.config.monitor_selected != previous_selected:
+                LayoutService.normalize_selection(self.state)
+            self.state.mark_config_dirty()
         elif action.command == "set_monitor":
             self.state.config.monitor_selected = payload["index"]
             self.state.config.ensure_lengths()
@@ -70,10 +80,19 @@ class AppController:
             self.state.mark_config_dirty()
         elif action.command == "adjust_monitor_field":
             LayoutService.adjust_monitor_field(self.state, payload["field"], payload["delta"])
+        elif action.command == "set_monitor_field":
+            LayoutService.set_monitor_field(self.state, payload["field"], int(payload["value"]))
         elif action.command == "adjust_canvas":
             LayoutService.adjust_canvas_value(self.state, payload["field"], payload["delta"])
+        elif action.command == "set_canvas_value":
+            LayoutService.set_canvas_value(self.state, payload["field"], int(payload["value"]))
         elif action.command == "adjust_tv_count":
             LayoutService.adjust_tv_count(self.state.config, payload["delta"])
+            LayoutService.normalize_selection(self.state)
+            self.state.mark_source_dirty()
+        elif action.command == "set_tv_count":
+            self.state.config.number_tvs = max(1, int(payload["value"]))
+            self.state.config.ensure_lengths()
             LayoutService.normalize_selection(self.state)
             self.state.mark_source_dirty()
         elif action.command == "select_tv":
@@ -82,11 +101,17 @@ class AppController:
             self.state.selected_tv = payload["index"]
             LayoutService.normalize_selection(self.state)
             self.state.mark_config_dirty()
+        elif action.command == "set_selected_tv_value":
+            self.state.selected_tv = int(payload["value"])
+            LayoutService.normalize_selection(self.state)
+            self.state.mark_config_dirty()
         elif action.command == "set_grid_index":
             self.state.grid_index = payload["index"]
             self.state.mark_config_dirty()
         elif action.command == "adjust_tv_value":
             LayoutService.adjust_tv_value(self.state, payload["index"], payload["field"], payload["delta"])
+        elif action.command == "set_tv_value":
+            LayoutService.set_tv_value(self.state, payload["index"], payload["field"], int(payload["value"]))
 
     def set_source(self, index: int) -> None:
         self.state.current_source_index = max(0, min(index, 2))

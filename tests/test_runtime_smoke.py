@@ -14,6 +14,7 @@ sys.path.insert(0, 'src')
 from tvwall.app.window import MapperWindow
 import pyglet
 w = MapperWindow(Path('.').resolve())
+w.controller.state.show_framerate = True
 pyglet.clock.schedule_once(lambda dt: (w.dispatch_event('on_draw'), w.close(), pyglet.app.exit()), 0.1)
 pyglet.app.run()
 print('window-live-smoke-ok')

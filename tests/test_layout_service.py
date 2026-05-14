@@ -63,3 +63,20 @@ def test_pack_tv_uniforms_is_stable() -> None:
     packed, count = LayoutService.pack_tv_uniforms(state.config.tv_mappings, 0, 3)
     assert count == 3
     assert len(packed) == 9 * 4 * 4
+
+
+def test_adjust_monitor_count_assigns_new_monitors_to_next_tv_range() -> None:
+    config = AppConfig(
+        number_tvs=4,
+        number_monitors=1,
+        monitor_data=[MonitorConfig(tv_layout="1", tv_number=1, tv_first=1)],
+    )
+    config.ensure_lengths()
+
+    LayoutService.adjust_monitor_count(config, 2)
+
+    assert len(config.monitor_data) == 3
+    assert config.monitor_data[1].tv_first == 2
+    assert config.monitor_data[1].tv_number == 1
+    assert config.monitor_data[2].tv_first == 3
+    assert config.monitor_data[2].tv_number == 1
